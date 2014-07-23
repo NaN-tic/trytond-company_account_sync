@@ -1,0 +1,14 @@
+# 
+msgid ""
+msgstr "Content-Type: text/plain; charset=utf-8\n"
+
+msgctxt "field:account.configuration,sync_companies:"
+msgid "Sync Companies"
+msgstr "Sincronitzar empreses"
+
+msgctxt "help:account.configuration,sync_companies:"
+msgid ""
+"If marked all the accounts changes will be replicated to all the companies"
+msgstr ""
+"Si es marca tots els canvis que es realitzin a les comptes comptables es "
+"replicaran a totes les empreses."
