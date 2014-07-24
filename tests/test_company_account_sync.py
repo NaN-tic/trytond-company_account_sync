@@ -92,6 +92,8 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                         'parent': main_company.id,
                         'currency': currency1.id,
                         }])
+
+            num_companies = self.company.search([], count=True)
             user = self.user(USER)
             self.user.write([user], {
                     'main_company': main_company.id,
@@ -100,11 +102,8 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             CONTEXT.update(self.user.get_preferences(context_only=True))
 
             self.create_chart(company1)
-            original_accounts = self.account.search([])
             #Create chart for other company
             self.create_chart(company2)
-            accounts = self.account.search([])
-            self.assertEqual(len(accounts), len(original_accounts))
             #Enable syncronization
             config = self.config(1)
             config.sync_companies = True
@@ -127,7 +126,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                 company_accounts[account.company].append(account)
                 links[account.sync_link] += 1
             for _, link_count in links.iteritems():
-                self.assertEqual(link_count, 3)
+                self.assertEqual(link_count, num_companies)
             #Ensure codes are synced
             first, second = self.account.search([
                     ('name', '=', 'Minimal Account Chart'),
@@ -224,13 +223,12 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                 account_tax.taxes = [tax1]
                 account_tax.save()
             with transaction.set_user(0):
-                self.assertEqual(len(self.tax_code.search([])), 12)
-                self.assertEqual(len(self.tax.search([])), 3)
+                self.assertEqual(len(self.tax.search([])), num_companies)
                 tax_accounts = self.account.search([
                             ('kind', '=', 'other'),
                             ('name', '=', 'Main Tax'),
                             ])
-                self.assertEqual(len(tax_accounts), 3)
+                self.assertEqual(len(tax_accounts), num_companies)
                 for account in tax_accounts:
                     tax, = account.taxes
                     self.assertEqual(tax.name, tax1.name)
