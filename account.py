@@ -1,9 +1,11 @@
 #The COPYRIGHT file at the top level of this repository contains the full
 #copyright notices and license terms.
+from itertools import islice
 from trytond.model import fields, ModelSQL
 from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval
 from trytond.transaction import Transaction
+from trytond.const import RECORD_CACHE_SIZE
 
 __all__ = ['Link', 'Account', 'Type', 'TaxCode', 'Tax', 'Rule', 'RuleLine']
 __metaclass__ = PoolMeta
@@ -48,6 +50,7 @@ class LinkedMixin:
     _syncronize_excluded_fields = set(['create_date', 'create_uid',
             'write_date', 'write_uid', 'id', 'company', 'left', 'right',
             'childs'])
+    _company_search_field = 'company'
 
     link_required = fields.Function(fields.Boolean('Link Required'),
         'get_link_required')
@@ -56,6 +59,18 @@ class LinkedMixin:
             'required': Eval('link_required', False),
             },
         depends=['link_required'])
+
+    @classmethod
+    def get_link_required(cls, records, name):
+        pool = Pool()
+        Config = pool.get('account.configuration')
+        config = Config.get_singleton()
+        required = False
+        if config:
+            required = config.sync_companies
+        if Transaction().context.get('link_not_required'):
+            required = False
+        return {}.fromkeys([r.id for r in records], required)
 
     @classmethod
     def syncronized(cls):
@@ -88,20 +103,27 @@ class LinkedMixin:
         return to_sync
 
     @classmethod
-    def convert_values(cls, values, new_company):
+    def _get_target_model(cls, field):
+        pool = Pool()
+        target = None
+        relation = getattr(cls._fields[field], 'relation_name', None)
+        if relation:
+            #Many2Many fields
+            Relation = pool.get(relation)
+            target = Relation._fields[cls._fields[field].target].model_name
+        else:
+            #Many2One and One2Many fields
+            target = getattr(cls._fields[field], 'model_name', None)
+        return target
+
+    @classmethod
+    def convert_values(cls, values, new_company, old_company):
         'Converts al values to the company values'
         pool = Pool()
         Link = pool.get('company.account.link')
         new_values = {}
         for key, value in values.iteritems():
-            relation = getattr(cls._fields[key], 'relation_name', None)
-            if relation:
-                #Many2Many fields
-                Relation = pool.get(relation)
-                target = Relation._fields[cls._fields[key].target].model_name
-            else:
-                #Many2One and One2Many fields
-                target = getattr(cls._fields[key], 'model_name', None)
+            target = cls._get_target_model(key)
             if value and target and target in Link.get_syncronized_models():
                 if isinstance(value, ModelSQL):
                     links = [value.sync_link.id]
@@ -111,14 +133,16 @@ class LinkedMixin:
                 with Transaction().set_user(0):
                     new_value = Target.search([
                             ('sync_link', 'in', links),
-                            ('company', '=', new_company.id),
+                            (Target._company_search_field, '=',
+                                new_company.id),
                             ])
                 if isinstance(value, ModelSQL):
                     value = new_value[0] if new_value else None
                 else:
                     value = new_value
             new_values[key] = value
-        new_values['company'] = new_company.id
+        if hasattr(cls, 'company'):
+            new_values['company'] = new_company
         return new_values
 
     @classmethod
@@ -139,48 +163,64 @@ class LinkedMixin:
         template or code, if none found, it sets the link to the current
         record, so the record becomes the master record.
         '''
-        pool = Pool()
-        Link = pool.get('company.account.link')
         if not cls.syncronized():
             return
-        to_write = []
         links = {}
         for field in cls._syncronize_link_fields():
             links[field] = {}
         with Transaction().set_user(0):
-            for record in records:
-                for field in cls._syncronize_link_fields():
-                    if hasattr(record, field) and getattr(record, field):
-                        try:
-                            link = links[field][getattr(record, field)]
-                            to_write.extend(([record], {
-                                        'sync_link': link
-                                        }))
-                            break
-                        except KeyError:
-                            linked = cls.search([
-                                    ('sync_link', '!=', None),
-                                    (field, '=', getattr(record, field)),
-                                    ])
-                            if linked:
-                                value = {
-                                    'sync_link': linked[0].sync_link.id,
-                                    }
-                                to_write.extend(([record], value))
-                                break
-                else:
-                    link, = Link.create([{'model': cls.__name__}])
-                    for field in cls._syncronize_link_fields():
-                        if hasattr(record, field) and getattr(record, field):
-                            links[field][getattr(record, field)] = link.id
-                    to_write.extend(([record], {
-                                'sync_link': link.id
-                                }))
-            if to_write:
-                with Transaction().set_context(sync_companies=False):
-                    cls.write(*to_write)
+            #TODO: Replace with grouped slice
+            count = RECORD_CACHE_SIZE
+            for i in xrange(0, len(records), count):
+                sub_records = islice(records, i, i + count)
+                to_write = {}
 
-    def sync_to_all_companies(self):
+                for record in sub_records:
+                    link = cls._get_link(record, links)
+                    if link not in to_write:
+                        to_write[link] = []
+                    to_write[link].append(record)
+                args = []
+                for value, models in to_write.iteritems():
+                    args += [models, {'sync_link': value}]
+                if args:
+                    with Transaction().set_context(sync_companies=False):
+                        cls.write(*args)
+
+    @classmethod
+    def _get_link(cls, record, links=None):
+        '''Returns the current link for the record.
+        The record can be an instance or a dict with instance values
+        '''
+        pool = Pool()
+        Link = pool.get('company.account.link')
+        if not cls.syncronized():
+            return
+        if links is None:
+            links = {}
+        for field in cls._syncronize_link_fields():
+            if hasattr(record, field) and getattr(record, field):
+                try:
+                    link = links[field][getattr(record, field)]
+                    break
+                except KeyError:
+                    linked = cls.search([
+                            ('sync_link', '!=', None),
+                            (field, '=', getattr(record, field)),
+                            ])
+                    if linked:
+                        link = linked[0].sync_link.id
+        else:
+            link, = Link.create([{'model': cls.__name__}])
+            link = link.id
+
+        for field in cls._syncronize_link_fields():
+            if (hasattr(record, field) and
+                    getattr(record, field)):
+                links[field][getattr(record, field)] = link
+        return link
+
+    def sync_to_all_companies(self, langs=None):
         'Syncs this account, to all companies'
         if not self.syncronized():
             return
@@ -188,15 +228,16 @@ class LinkedMixin:
             return
 
         for company in self.companies_to_sync():
-            self.sync_to_company(company)
+            self.sync_to_company(company, langs)
 
-    def sync_to_company(self, company):
+    def sync_to_company(self, company, langs=None):
         'Sync this account to the company company'
         pool = Pool()
         Lang = pool.get('ir.lang')
-        langs = Lang.search([
-            ('translatable', '=', True),
-            ])
+        if langs is None:
+            langs = Lang.search([
+                ('translatable', '=', True),
+                ])
         current_vals = {}
         fields_translate = []
         for fname in self.fields_to_sync():
@@ -209,25 +250,31 @@ class LinkedMixin:
 
         translations = {}
         with Transaction().set_user(0):
-            for lang in langs:
-                with Transaction().set_context(language=lang.code):
-                    data = self.read([self.id],
-                        fields_names=fields_translate)[0]
-                    translations[lang.code] = data
+            if fields_translate:
+                for lang in langs:
+                    with Transaction().set_context(language=lang.code):
+                        data = self.read([self.id],
+                            fields_names=fields_translate)[0]
+                        translations[lang.code] = data
             with Transaction().set_context(sync_companies=False,
                     company=company.id):
-                new_vals = self.convert_values(current_vals, company)
+                new_vals = self.convert_values(current_vals, company,
+                    getattr(self, 'company', None))
                 records = self.search([
                         ('sync_link', '=', self.sync_link),
-                        ('company', '=', company),
+                        (self._company_search_field, '=', company),
                         ], limit=1)
                 if records:
                     record, = records
-                    for key, value in new_vals.iteritems():
-                        setattr(record, key, value)
-                    record.save()
                 else:
-                    record, = self.create([new_vals])
+                    record = self.__class__()
+                for key, value in new_vals.iteritems():
+                    old_value = None
+                    if hasattr(record, key):
+                        old_value = getattr(record, key)
+                    if old_value != value:
+                        setattr(record, key, value)
+                record.save()
                 #Copy translations
                 for lang_code, data in translations.iteritems():
                     with Transaction().set_context(language=lang_code,
@@ -236,10 +283,13 @@ class LinkedMixin:
 
     @classmethod
     def create(cls, vlist):
+        for value in vlist:
+            if value.get('sync_link'):
+                continue
+            link = cls._get_link(value)
+            if link:
+                value['sync_link'] = link
         records = super(LinkedMixin, cls).create(vlist)
-        to_sync = [r for r in records if not r.sync_link]
-        if to_sync:
-            cls.syncronize_link(to_sync)
         for record in records:
             record.sync_to_all_companies()
         return records
@@ -303,3 +353,8 @@ class Rule(LinkedMixin):
 
 class RuleLine(LinkedMixin):
     __name__ = 'account.tax.rule.line'
+
+    @classmethod
+    def __setup__(cls):
+        super(RuleLine, cls).__setup__()
+        cls._company_search_field = 'rule.company'

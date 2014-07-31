@@ -27,6 +27,8 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
         self.tax = POOL.get('account.tax')
         self.tax_code = POOL.get('account.tax.code')
         self.user = POOL.get('res.user')
+        self.tax_rule = POOL.get('account.tax.rule')
+        self.tax_rule_line = POOL.get('account.tax.rule.line')
 
     def test0005views(self):
         'Test views'
@@ -189,7 +191,6 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             self.assertEqual(self.account.search([
                         ('code', '=', '40'),
                         ]), [])
-            #TODO: Create a tax and link it to an account. Check it gets sync
             with transaction.set_context(company=company1.id):
                 account_tax, = self.account.search([
                         ('kind', '=', 'other'),
@@ -232,6 +233,22 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                 for account in tax_accounts:
                     tax, = account.taxes
                     self.assertEqual(tax.name, tax1.name)
+            with transaction.set_context(company=company1.id):
+                rule, = self.tax_rule.create([{
+                            'company': company1.id,
+                            'name': 'Tax rule',
+                            # TODO: This currently doesn't work
+                            #'lines': [('create', [{}])],
+                            }])
+                self.tax_rule_line.create([{
+                            'rule': rule.id,
+                            }])
+            with transaction.set_user(0):
+                rules = self.tax_rule.search([])
+                self.assertEqual(len(rules), num_companies)
+                for rule in rules:
+                    self.assertEqual(rule.name, 'Tax rule')
+                    self.assertEqual(len(rule.lines), 1)
 
 
 def suite():

@@ -25,6 +25,12 @@ class Configuration:
         saved to all companies.
         """
         pool = Pool()
+        Configuration = pool.get('ir.configuration')
+        Lang = pool.get('ir.lang')
+        langs = Lang.search([
+                ('translatable', '=', True),
+                ('code', '!=', Configuration.get_language()),
+            ])
         Link = pool.get('company.account.link')
         config = cls.get_singleton()
         if not config.sync_companies:
@@ -39,8 +45,11 @@ class Configuration:
             Model.syncronize_link(records)
             to_sync.extend(records)
         #Sync all the records to all the companies
+        synced_links = set()
         for record in to_sync:
-            record.sync_to_all_companies()
+            if not record.sync_link.id in synced_links:
+                record.sync_to_all_companies(langs=langs)
+                synced_links.add(record.sync_link.id)
 
     @classmethod
     def create(cls, vlist):
