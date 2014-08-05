@@ -2,9 +2,117 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=utf-8\n"
 
+msgctxt "field:account.account,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.account,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
+msgctxt "field:account.account.type,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.account.type,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
 msgctxt "field:account.configuration,sync_companies:"
 msgid "Sync Companies"
 msgstr "Sincronizar empresas"
+
+msgctxt "field:account.tax,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.tax,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
+msgctxt "field:account.tax.code,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.tax.code,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
+msgctxt "field:account.tax.rule,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.tax.rule,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
+msgctxt "field:account.tax.rule.line,link_required:"
+msgid "Link Required"
+msgstr "Enlace obligatorio"
+
+msgctxt "field:account.tax.rule.line,sync_link:"
+msgid "Link"
+msgstr "Enlace"
+
+msgctxt "field:company.account.link,create_date:"
+msgid "Create Date"
+msgstr "Fecha de creación"
+
+msgctxt "field:company.account.link,create_uid:"
+msgid "Create User"
+msgstr "Usuario de creación"
+
+msgctxt "field:company.account.link,id:"
+msgid "ID"
+msgstr "Identificador"
+
+msgctxt "field:company.account.link,model:"
+msgid "Model"
+msgstr "Modelo"
+
+msgctxt "field:company.account.link,rec_name:"
+msgid "Name"
+msgstr "Nombre"
+
+msgctxt "field:company.account.link,write_date:"
+msgid "Write Date"
+msgstr "Fecha modificación"
+
+msgctxt "field:company.account.link,write_uid:"
+msgid "Write User"
+msgstr "Usuario modificación"
+
+msgctxt "field:company.account.sync_journal,action:"
+msgid "Action"
+msgstr "Acción"
+
+msgctxt "field:company.account.sync_journal,create_date:"
+msgid "Create Date"
+msgstr "Fecha de creación"
+
+msgctxt "field:company.account.sync_journal,create_uid:"
+msgid "Create User"
+msgstr "Usuario de creación"
+
+msgctxt "field:company.account.sync_journal,id:"
+msgid "ID"
+msgstr "Identificador"
+
+msgctxt "field:company.account.sync_journal,rec_name:"
+msgid "Name"
+msgstr "Nombre"
+
+msgctxt "field:company.account.sync_journal,record:"
+msgid "Record"
+msgstr "Registro"
+
+msgctxt "field:company.account.sync_journal,write_date:"
+msgid "Write Date"
+msgstr "Fecha modificación"
+
+msgctxt "field:company.account.sync_journal,write_uid:"
+msgid "Write User"
+msgstr "Usuario modificación"
 
 msgctxt "help:account.configuration,sync_companies:"
 msgid ""
@@ -12,3 +120,31 @@ msgid ""
 msgstr ""
 "Si se marca, todos los cambios realizados en cuentas contables seran "
 "replicados a todas las empresas."
+
+msgctxt "model:company.account.link,name:"
+msgid "Account Company Link"
+msgstr "Enlace sincronización cuentas"
+
+msgctxt "model:company.account.sync_journal,name:"
+msgid "Account Company Sync Journal"
+msgstr "Dirario sincronización cuentas"
+
+msgctxt "model:ir.cron,name:cron_company_account_sync"
+msgid "Company Account Sync"
+msgstr "Sincronización cuentas por empresa"
+
+msgctxt "model:res.user,name:user_syncronize"
+msgid "Cron Company Account Sync"
+msgstr "Planificador sincronización cuentas por empresa"
+
+msgctxt "selection:company.account.sync_journal,action:"
+msgid "Create"
+msgstr "Crear"
+
+msgctxt "selection:company.account.sync_journal,action:"
+msgid "Delete"
+msgstr "Eliminar"
+
+msgctxt "selection:company.account.sync_journal,action:"
+msgid "Write"
+msgstr "Modificación"

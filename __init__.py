@@ -8,6 +8,7 @@ from .account import *
 def register():
     Pool.register(
         Link,
+        Journal,
         Configuration,
         Account,
         Type,

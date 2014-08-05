@@ -5,9 +5,11 @@ from trytond.model import fields, ModelSQL
 from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval
 from trytond.transaction import Transaction
+from trytond.error import UserError
 from trytond.const import RECORD_CACHE_SIZE
 
-__all__ = ['Link', 'Account', 'Type', 'TaxCode', 'Tax', 'Rule', 'RuleLine']
+__all__ = ['Link', 'Journal', 'Account', 'Type', 'TaxCode', 'Tax', 'Rule',
+    'RuleLine']
 __metaclass__ = PoolMeta
 
 
@@ -34,6 +36,70 @@ class Link(ModelSQL):
             'account.tax.rule.line',
             'account.tax',
             ]
+
+
+class Journal(ModelSQL):
+    'Account Company Sync Journal'
+    __name__ = 'company.account.sync_journal'
+    action = fields.Selection([
+            ('create', 'Create'),
+            ('write', 'Write'),
+            ('delete', 'Delete'),
+            ], 'Action')
+    record = fields.Reference('Record', selection='get_models')
+
+    @staticmethod
+    def get_models():
+        pool = Pool()
+        Model = pool.get('ir.model')
+        Link = pool.get('company.account.link')
+        model_names = ['company.account.link'] + Link.get_syncronized_models()
+        models = Model.search([
+                ('model', 'in', model_names),
+                ])
+        res = []
+        for model in models:
+            res.append([model.model, model.name])
+        return res
+
+    @classmethod
+    def syncronize(cls):
+        pool = Pool()
+        Lang = pool.get('ir.lang')
+        Configuration = pool.get('ir.configuration')
+        langs = Lang.search([
+                ('translatable', '=', True),
+                ('code', '!=', Configuration.get_language()),
+            ])
+        with Transaction().set_user(0):
+            entries = cls.search([])
+            latter = []
+            for entry in entries:
+                try:
+                    entry.sync(langs)
+                except UserError:
+                    #One2Many with parent record still not created
+                    latter.append(entry)
+            for entry in latter:
+                entry.sync(langs)
+            if entries:
+                cls.delete(entries)
+
+    def sync(self, langs=None):
+        pool = Pool()
+        Link = pool.get('company.account.link')
+        record = self.record
+        if self.action == 'delete':
+            Target = pool.get(record.model)
+            to_delete = Target.search([
+                    ('sync_link', '=', record),
+                    ])
+            if to_delete:
+                with Transaction().set_context(sync_companies=False):
+                    Target.delete(to_delete)
+                    Link.delete([record])
+        else:
+            record.sync_to_all_companies(langs=langs)
 
 
 class LinkedMixin:
@@ -282,6 +348,17 @@ class LinkedMixin:
                         self.write([record], data)
 
     @classmethod
+    def create_journal_entries(cls, records, action):
+        pool = Pool()
+        Journal = pool.get('company.account.sync_journal')
+        if not cls.syncronized():
+            return
+        if not Transaction().context.get('sync_companies', True):
+            return
+        to_create = [{'action': action, 'record': str(r)} for r in records]
+        Journal.create(to_create)
+
+    @classmethod
     def create(cls, vlist):
         for value in vlist:
             if value.get('sync_link'):
@@ -290,8 +367,7 @@ class LinkedMixin:
             if link:
                 value['sync_link'] = link
         records = super(LinkedMixin, cls).create(vlist)
-        for record in records:
-            record.sync_to_all_companies()
+        cls.create_journal_entries(records, 'create')
         return records
 
     @classmethod
@@ -301,21 +377,12 @@ class LinkedMixin:
         for records, _ in zip(actions, actions):
             all_records += records
         super(LinkedMixin, cls).write(*args)
-        for record in all_records:
-            record.sync_to_all_companies()
+        cls.create_journal_entries(records, 'write')
 
     @classmethod
     def delete(cls, records):
-        transaction = Transaction()
-        links = [r.sync_link for r in records]
-        if cls.syncronized() and transaction.context.get('sync_companies',
-                True):
-            with transaction.set_user(0):
-                to_delete = cls.search([
-                        ('sync_link', 'in', links),
-                        ])
-                if to_delete:
-                    super(LinkedMixin, cls).delete(to_delete)
+        links = set([x.sync_link for x in records])
+        cls.create_journal_entries(links, 'delete')
         super(LinkedMixin, cls).delete(records)
 
     @classmethod

@@ -29,6 +29,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
         self.user = POOL.get('res.user')
         self.tax_rule = POOL.get('account.tax.rule')
         self.tax_rule_line = POOL.get('account.tax.rule.line')
+        self.journal = POOL.get('company.account.sync_journal')
 
     def test0005views(self):
         'Test views'
@@ -137,6 +138,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             #Modify first account and test it gets modified on other company
             first.note = 'Modified'
             first.save()
+            self.journal.syncronize()
             second = self.account(second.id)
             self.assertEqual(first.note, second.note)
 
@@ -148,6 +150,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                     'code': '40',
                     'name': 'New revenue',
                     })
+            self.journal.syncronize()
             self.assertIsNotNone(new_revenue.sync_link)
             self.assertNotEqual(new_revenue.sync_link, revenue.sync_link)
             account, = self.account.search([
@@ -160,6 +163,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             #Modifiy it and check it has changed in the other company
             account.note = 'Modified on company2'
             account.save()
+            self.journal.syncronize()
 
             new_revenue = self.account(new_revenue.id)
             self.assertEqual(new_revenue.note, account.note)
@@ -175,6 +179,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                 new_revenue.name = 'Nombre en castellano'
                 new_revenue.save()
 
+            self.journal.syncronize()
             with transaction.set_context(language='en_US'):
                 new_revenue = self.account(new_revenue.id)
                 account = self.account(account.id)
@@ -188,6 +193,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
 
             #Delete new revenue account and check deleted in all companies
             self.account.delete([new_revenue])
+            self.journal.syncronize()
             self.assertEqual(self.account.search([
                         ('code', '=', '40'),
                         ]), [])
@@ -223,6 +229,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                             }])
                 account_tax.taxes = [tax1]
                 account_tax.save()
+            self.journal.syncronize()
             with transaction.set_user(0):
                 self.assertEqual(len(self.tax.search([])), num_companies)
                 tax_accounts = self.account.search([
@@ -237,12 +244,9 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                 rule, = self.tax_rule.create([{
                             'company': company1.id,
                             'name': 'Tax rule',
-                            # TODO: This currently doesn't work
-                            #'lines': [('create', [{}])],
+                            'lines': [('create', [{}])],
                             }])
-                self.tax_rule_line.create([{
-                            'rule': rule.id,
-                            }])
+            self.journal.syncronize()
             with transaction.set_user(0):
                 rules = self.tax_rule.search([])
                 self.assertEqual(len(rules), num_companies)

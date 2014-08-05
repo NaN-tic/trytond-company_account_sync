@@ -8,5 +8,29 @@
             <field name="name">configuration_form</field>
             <field name="inherit" ref="account.configuration_view_form"/>
         </record>
+        <record model="res.user" id="user_syncronize">
+            <field name="login">user_cron_company_account_sync</field>
+            <field name="name">Cron Company Account Sync</field>
+            <field name="signature"></field>
+            <field name="active" eval="False"/>
+        </record>
+        <record model="res.user-res.group"
+            id="user_syncronize_group_account">
+            <field name="user" ref="user_syncronize"/>
+            <field name="group" ref="account.group_account_admin"/>
+        </record>
+
+        <record model="ir.cron" id="cron_company_account_sync">
+            <field name="name">Company Account Sync</field>
+            <field name="request_user" ref="res.user_admin"/>
+            <field name="user" ref="user_syncronize"/>
+            <field name="active" eval="True"/>
+            <field name="interval_number" eval="1"/>
+            <field name="interval_type">minutes</field>
+            <field name="number_calls" eval="-1"/>
+            <field name="repeat_missed" eval="False"/>
+            <field name="model">company.account.sync_journal</field>
+            <field name="function">syncronize</field>
+        </record>
     </data>
 </tryton>
