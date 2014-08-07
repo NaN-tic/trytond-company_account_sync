@@ -147,12 +147,18 @@ class LinkedMixin:
             return config.sync_companies
         return False
 
-    @classmethod
-    def companies_to_sync(cls):
+    def companies_to_sync(self):
         pool = Pool()
         Company = pool.get('company.company')
-        company_id = Transaction().context.get('company')
-        return Company.search([('id', '!=', company_id)])
+        domain = []
+        company_id = self
+        for name in self._company_search_field.split('.'):
+            company_id = getattr(company_id, name)
+            if not company_id:
+                break
+        if company_id:
+            domain = [('id', '!=', company_id)]
+        return Company.search(domain)
 
     @classmethod
     def fields_to_sync(cls):
