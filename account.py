@@ -157,6 +157,8 @@ class LinkedMixin:
             if not company_id:
                 break
         if company_id:
+            if isinstance(company_id, ModelSQL):
+                company_id = company_id.id
             domain = [('id', '!=', company_id)]
         return Company.search(domain)
 
@@ -346,12 +348,19 @@ class LinkedMixin:
                         old_value = getattr(record, key)
                     if old_value != value:
                         setattr(record, key, value)
+                #Validate record before save so we avoid errors on PostgreSQL
+                record._check_company_sync()
                 record.save()
                 #Copy translations
                 for lang_code, data in translations.iteritems():
                     with Transaction().set_context(language=lang_code,
                             fuzzy_translation=False, sync_companies=False):
                         self.write([record], data)
+
+    def _check_company_sync(self):
+        '''Check if company sync is correct for the current method and return
+        and user error if not'''
+        pass
 
     @classmethod
     def create_journal_entries(cls, records, action):
@@ -431,3 +440,7 @@ class RuleLine(LinkedMixin):
     def __setup__(cls):
         super(RuleLine, cls).__setup__()
         cls._company_search_field = 'rule.company'
+
+    def _check_company_sync(self):
+        if not hasattr(self, 'rule') or not self.rule:
+            raise UserError('Rule not found')
