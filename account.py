@@ -389,7 +389,7 @@ class LinkedMixin:
         for records, _ in zip(actions, actions):
             all_records += records
         super(LinkedMixin, cls).write(*args)
-        cls.create_journal_entries(records, 'write')
+        cls.create_journal_entries(all_records, 'write')
 
     @classmethod
     def delete(cls, records):
