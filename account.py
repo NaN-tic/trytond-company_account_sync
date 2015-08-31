@@ -127,6 +127,15 @@ class LinkedMixin:
         depends=['link_required'])
 
     @classmethod
+    def __setup__(cls):
+        # Initialized here in order to have __name__ available
+        if not hasattr(cls, 'company_linked_records'):
+            cls.company_linked_records = fields.Function(
+                fields.One2Many(cls.__name__, None, 'Linked Records'),
+                'get_company_linked_records')
+        super(LinkedMixin, cls).__setup__()
+
+    @classmethod
     def get_link_required(cls, records, name):
         pool = Pool()
         Config = pool.get('account.configuration')
@@ -137,6 +146,15 @@ class LinkedMixin:
         if Transaction().context.get('link_not_required'):
             required = False
         return {}.fromkeys([r.id for r in records], required)
+
+    def get_company_linked_records(self, name):
+        if not self.sync_link:
+            return []
+        with Transaction().set_user(0):
+            return [x.id for x in self.search([
+                        ('sync_link', '=', self.sync_link.id),
+                        ('id', '!=', self.id),
+                        ])]
 
     @classmethod
     def syncronized(cls):

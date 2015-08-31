@@ -141,6 +141,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             self.journal.syncronize()
             second = self.account(second.id)
             self.assertEqual(first.note, second.note)
+            self.assertEqual(len(first.company_linked_records), 2)
 
             revenue,  = self.account.search([
                     ('company', '=', company1.id),
@@ -197,8 +198,10 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             self.assertEqual(self.account.search([
                         ('code', '=', '40'),
                         ]), [])
-            with transaction.set_context(company=company1.id):
+            with (transaction.set_context(company=company1.id)
+                    and transaction.set_user(0)):
                 account_tax, = self.account.search([
+                        ('company', '=', company1.id),
                         ('kind', '=', 'other'),
                         ('name', '=', 'Main Tax'),
                         ])
