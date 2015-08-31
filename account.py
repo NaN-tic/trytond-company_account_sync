@@ -6,7 +6,7 @@ from trytond.pool import Pool, PoolMeta
 from trytond.pyson import Eval
 from trytond.transaction import Transaction
 from trytond.error import UserError
-from trytond.const import RECORD_CACHE_SIZE
+from trytond.tools import grouped_slice
 
 __all__ = ['Link', 'Journal', 'Account', 'Type', 'TaxCode', 'Tax', 'Rule',
     'RuleLine']
@@ -243,10 +243,7 @@ class LinkedMixin:
         for field in cls._syncronize_link_fields():
             links[field] = {}
         with Transaction().set_user(0):
-            #TODO: Replace with grouped slice
-            count = RECORD_CACHE_SIZE
-            for i in xrange(0, len(records), count):
-                sub_records = islice(records, i, i + count)
+            for sub_records in grouped_slice(records):
                 to_write = {}
 
                 for record in sub_records:
