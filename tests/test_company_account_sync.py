@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # The COPYRIGHT file at the top level of this repository contains the full
 # copyright notices and license terms.
-from decimal import Decimal
 import unittest
 import trytond.tests.test_tryton
 from trytond.tests.test_tryton import test_view, test_depends
@@ -17,19 +16,14 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
         self.account = POOL.get('account.account')
         self.account_create_chart = POOL.get('account.create_chart',
             type='wizard')
+        self.syncronize_wizard = POOL.get('account.chart.syncronize',
+            type='wizard')
         self.account_template = POOL.get('account.account.template')
         self.company = POOL.get('company.company')
         self.config = POOL.get('account.configuration')
         self.currency = POOL.get('currency.currency')
-        self.employee = POOL.get('company.employee')
-        self.lang = POOL.get('ir.lang')
         self.party = POOL.get('party.party')
-        self.tax = POOL.get('account.tax')
-        self.tax_code = POOL.get('account.tax.code')
         self.user = POOL.get('res.user')
-        self.tax_rule = POOL.get('account.tax.rule')
-        self.tax_rule_line = POOL.get('account.tax.rule.line')
-        self.journal = POOL.get('company.account.sync_journal')
 
     def test0005views(self):
         'Test views'
@@ -56,22 +50,31 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
         receivable, = self.account.search([
                 ('kind', '=', 'receivable'),
                 ('company', '=', company.id),
-                ])
+                ], limit=1)
         payable, = self.account.search([
                 ('kind', '=', 'payable'),
                 ('company', '=', company.id),
-                ])
+                ], limit=1)
         create_chart.properties.company = company
         create_chart.properties.account_receivable = receivable
         create_chart.properties.account_payable = payable
         create_chart.transition_create_properties()
 
+    def syncronize(self):
+        session_id, _, _ = self.syncronize_wizard.create()
+        syncronize = self.syncronize_wizard(session_id)
+        account_template, = self.account_template.search([
+                ('parent', '=', None),
+                ])
+        syncronize.start.account_template = account_template
+        syncronize.start.companies = self.company.search([])
+        syncronize.transition_syncronize()
+
     def test0010_sync(self):
         '''
         Test user company
         '''
-        with Transaction().start(DB_NAME, USER,
-                context=CONTEXT) as transaction:
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
             currency1, = self.currency.search([], limit=1)
 
             main_company, = self.company.search([
@@ -96,166 +99,60 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                         'currency': currency1.id,
                         }])
 
-            num_companies = self.company.search([], count=True)
+            companies = self.company.search([])
             user = self.user(USER)
             self.user.write([user], {
                     'main_company': main_company.id,
                     'company': main_company.id,
                     })
             CONTEXT.update(self.user.get_preferences(context_only=True))
-
-            self.create_chart(company1)
-            #Create chart for other company
-            self.create_chart(company2)
-            #Enable syncronization
-            config = self.config(1)
-            config.sync_companies = True
-            config.save()
-            self.user.write([user], {
-                    'main_company': main_company.id,
-                    'company': main_company.id,
-                    })
-            CONTEXT.update(self.user.get_preferences(context_only=True))
+            self.syncronize()
             #All accounts must have the link defined.
             accounts = self.account.search([])
             company_accounts = {}
             links = {}
             for account in accounts:
-                self.assertIsNotNone(account.sync_link)
+                self.assertIsNotNone(account.template)
                 if not account.company in company_accounts:
                     company_accounts[account.company] = []
-                if not account.sync_link in links:
-                    links[account.sync_link] = 0
+                if not account.template in links:
+                    links[account.template] = 0
                 company_accounts[account.company].append(account)
-                links[account.sync_link] += 1
+                links[account.template] += 1
             for _, link_count in links.iteritems():
-                self.assertEqual(link_count, num_companies)
+                self.assertEqual(link_count, len(companies))
             #Ensure codes are synced
             first, second = self.account.search([
                     ('name', '=', 'Minimal Account Chart'),
                     ('company', 'in', [company1, company2]),
                     ])
             #Modify first account and test it gets modified on other company
-            first.note = 'Modified'
-            first.save()
-            self.journal.syncronize()
+            template = first.template
+            template.code = '0'
+            template.save()
+            self.syncronize()
+            first = self.account(first.id)
             second = self.account(second.id)
-            self.assertEqual(first.note, second.note)
-            self.assertEqual(len(first.company_linked_records), 2)
+            self.assertEqual(first.code, '0')
+            self.assertEqual(first.code, second.code)
 
             revenue,  = self.account.search([
                     ('company', '=', company1.id),
                     ('kind', '=', 'revenue'),
                     ])
-            new_revenue, = self.account.copy([revenue], {
+            new_revenue, = self.account_template.copy([revenue.template], {
                     'code': '40',
                     'name': 'New revenue',
                     })
-            self.journal.syncronize()
-            self.assertIsNotNone(new_revenue.sync_link)
-            self.assertNotEqual(new_revenue.sync_link, revenue.sync_link)
-            account, = self.account.search([
-                    ('code', '=', '40'),
-                    ('company', '=', company2.id),
-                    ])
-            self.assertEqual(new_revenue.name, account.name)
-            #Check correct types and parents
-            self.assertEqual(new_revenue.sync_link, account.sync_link)
-            #Modifiy it and check it has changed in the other company
-            account.note = 'Modified on company2'
-            account.save()
-            self.journal.syncronize()
-
-            new_revenue = self.account(new_revenue.id)
-            self.assertEqual(new_revenue.note, account.note)
-            #Activate transslations and change the name for one account
-            #in on language
-            lang_es, = self.lang.search([
-                    ('code', '=', 'es_ES'),
-                    ])
-            lang_es.translatable = True
-            lang_es.save()
-            with transaction.set_context(language=lang_es.code):
-                new_revenue = self.account(new_revenue.id)
-                new_revenue.name = 'Nombre en castellano'
-                new_revenue.save()
-
-            self.journal.syncronize()
-            with transaction.set_context(language='en_US'):
-                new_revenue = self.account(new_revenue.id)
-                account = self.account(account.id)
-                self.assertEqual(new_revenue.name, 'New revenue')
-                self.assertEqual(account.name, 'New revenue')
-            with transaction.set_context(language=lang_es.code):
-                new_revenue = self.account(new_revenue.id)
-                account = self.account(account.id)
-                self.assertEqual(new_revenue.name, 'Nombre en castellano')
-                self.assertEqual(account.name, 'Nombre en castellano')
-
-            #Delete new revenue account and check deleted in all companies
-            self.account.delete([new_revenue])
-            self.journal.syncronize()
-            self.assertEqual(self.account.search([
+            self.syncronize()
+            for company in companies:
+                account, = self.account.search([
                         ('code', '=', '40'),
-                        ]), [])
-            with (transaction.set_context(company=company1.id)
-                    and transaction.set_user(0)):
-                account_tax, = self.account.search([
-                        ('company', '=', company1.id),
-                        ('kind', '=', 'other'),
-                        ('name', '=', 'Main Tax'),
+                        ('company', '=', company.id),
                         ])
-                (invoice_base, invoice_tax, credit_note_base,
-                    credit_note_tax) = self.tax_code.create([{
-                                'name': 'invoice base',
-                                },
-                            {
-                                'name': 'invoice tax',
-                                },
-                            {
-                                'name': 'credit note base',
-                                },
-                            {
-                                'name': 'credit note tax',
-                            }])
-                tax1, = self.tax.create([{
-                            'name': 'Tax 1',
-                            'description': 'Tax 1',
-                            'type': 'percentage',
-                            'rate': Decimal('.10'),
-                            'invoice_account': account_tax.id,
-                            'credit_note_account': account_tax.id,
-                            'invoice_base_code': invoice_base.id,
-                            'invoice_tax_code': invoice_tax.id,
-                            'credit_note_base_code': credit_note_base.id,
-                            'credit_note_tax_code': credit_note_tax.id,
-                            }])
-                account_tax.taxes = [tax1]
-                account_tax.save()
-            self.journal.syncronize()
-            with transaction.set_user(0):
-                self.assertEqual(len(self.tax.search([])), num_companies)
-                tax_accounts = self.account.search([
-                            ('kind', '=', 'other'),
-                            ('name', '=', 'Main Tax'),
-                            ])
-                self.assertEqual(len(tax_accounts), num_companies)
-                for account in tax_accounts:
-                    tax, = account.taxes
-                    self.assertEqual(tax.name, tax1.name)
-            with transaction.set_context(company=company1.id):
-                rule, = self.tax_rule.create([{
-                            'company': company1.id,
-                            'name': 'Tax rule',
-                            'lines': [('create', [{}])],
-                            }])
-            self.journal.syncronize()
-            with transaction.set_user(0):
-                rules = self.tax_rule.search([])
-                self.assertEqual(len(rules), num_companies)
-                for rule in rules:
-                    self.assertEqual(rule.name, 'Tax rule')
-                    self.assertEqual(len(rule.lines), 1)
+                self.assertEqual(new_revenue.name, account.name)
+                self.assertEqual(new_revenue.code, account.code)
+                self.assertEqual(account.template.id, new_revenue.id)
 
 
 def suite():

@@ -1,0 +1,141 @@
+<?xml version="1.0"?>
+<!-- This file is part of Tryton.  The COPYRIGHT file at the top level of
+this repository contains the full copyright notices and license terms. -->
+<tryton>
+    <data>
+
+        <record model="ir.action.act_window" id="act_account_template_list">
+            <field name="name">Account Templates</field>
+            <field name="res_model">account.account.template</field>
+        </record>
+        <record model="ir.action.act_window.view"
+                id="act_account_template_list_view1">
+            <field name="sequence" eval="10"/>
+            <field name="view" ref="account.account_template_view_list"/>
+            <field name="act_window" ref="act_account_template_list"/>
+        </record>
+        <record model="ir.action.act_window.view"
+                 id="act_account_template_list_view2">
+            <field name="sequence" eval="20"/>
+            <field name="view" ref="account.account_template_view_form"/>
+            <field name="act_window" ref="act_account_template_list"/>
+        </record>
+        <menuitem parent="account.menu_account_template_tree"
+            action="act_account_template_list" id="menu_account_template_list"/>
+        <record model="ir.model.access" id="access_account_template">
+            <field name="model"
+                search="[('model', '=', 'account.account.template')]"/>
+            <field name="group" ref="account.group_account_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record model="ir.model.access" id="access_tax_code_template">
+            <field name="model"
+                search="[('model', '=', 'account.tax.code.template')]"/>
+            <field name="group" ref="account.group_account_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record model="ir.model.access" id="access_tax_template">
+            <field name="model"
+                search="[('model', '=', 'account.tax.template')]"/>
+            <field name="group" ref="account.group_account_admin"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_delete" eval="True"/>
+        </record>
+
+        <record model="ir.ui.view" id="syncronize_start_view_form">
+            <field name="model">account.chart.syncronize.start</field>
+            <field name="type">form</field>
+            <field name="name">syncronize_start_form</field>
+        </record>
+        <record model="ir.ui.view" id="syncronize_succeed_view_form">
+            <field name="model">account.chart.syncronize.succeed</field>
+            <field name="type">form</field>
+            <field name="name">syncronize_succeed_form</field>
+        </record>
+
+
+        <record model="ir.ui.view" id="account_view_form">
+            <field name="model">account.account</field>
+            <field name="inherit" ref="account.account_view_form"/>
+            <field name="name">account_form</field>
+        </record>
+        <record model="ir.ui.view" id="account_view_tree">
+            <field name="model">account.account</field>
+            <field name="inherit" ref="account.account_view_tree"/>
+            <field name="name">account_list</field>
+        </record>
+        <record model="ir.ui.view" id="account_view_list">
+            <field name="model">account.account</field>
+            <field name="inherit" ref="account.account_view_list"/>
+            <field name="name">account_list</field>
+        </record>
+
+        <record model="ir.ui.view" id="account_type_view_form">
+            <field name="model">account.account.type</field>
+            <field name="inherit" ref="account.account_type_view_form"/>
+            <field name="name">account_type_form</field>
+        </record>
+        <record model="ir.ui.view" id="account_type_view_tree">
+            <field name="model">account.account.type</field>
+            <field name="inherit" ref="account.account_type_view_tree"/>
+            <field name="name">account_type_list</field>
+        </record>
+        <record model="ir.ui.view" id="account_type_view_list">
+            <field name="model">account.account.type</field>
+            <field name="inherit" ref="account.account_type_view_list"/>
+            <field name="name">account_type_list</field>
+        </record>
+
+        <record model="ir.ui.view" id="tax_view_form">
+            <field name="model">account.tax</field>
+            <field name="inherit" ref="account.tax_view_form"/>
+            <field name="name">tax_form</field>
+        </record>
+        <record model="ir.ui.view" id="tax_view_tree">
+            <field name="model">account.tax</field>
+            <field name="inherit" ref="account.tax_view_tree"/>
+            <field name="name">tax_tree</field>
+        </record>
+        <record model="ir.ui.view" id="tax_view_list">
+            <field name="model">account.tax</field>
+            <field name="inherit" ref="account.tax_view_list"/>
+            <field name="name">tax_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="tax_rule_view_form">
+            <field name="model">account.tax.rule</field>
+            <field name="inherit" ref="account.tax_rule_view_form"/>
+            <field name="name">tax_rule_form</field>
+        </record>
+
+        <record model="ir.ui.view" id="tax_rule_view_tree">
+            <field name="model">account.tax.rule</field>
+            <field name="inherit" ref="account.tax_rule_view_tree"/>
+            <field name="name">tax_rule_tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="tax_rule_line_view_form">
+            <field name="model">account.tax.rule.line</field>
+            <field name="inherit" ref="account.tax_rule_line_view_form"/>
+            <field name="name">tax_rule_line_form</field>
+        </record>
+
+        <record model="ir.action.wizard" id="wizard_syncronize">
+            <field name="name">Syncronize Chart between companies</field>
+            <field name="wiz_name">account.chart.syncronize</field>
+        </record>
+        <menuitem parent="account.menu_general_account_configuration"
+            action="wizard_syncronize" id="menu_syncornize_chart"/>
+
+    </data>
+</tryton>

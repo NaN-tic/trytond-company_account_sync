@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!-- The COPYRIGHT file at the top level of this repository contains the full
+     copyright notices and license terms. -->
+<form string="Syncronize Chart of Accounts between companies" col="2">
+    <image name="tryton-dialog-information" xexpand="0"
+        xfill="0"/>
+    <label
+        string="Select the companies and the chart you want to sincronize"
+        id="create"
+        yalign="0.0" xalign="0.0" xexpand="1"/>
+    <label name="account_template"/>
+    <field name="account_template" widget="selection"/>
+    <separator name="companies" colspan="2"/>
+    <field name="companies" widget="multiselection" colspan="2"/>
+</form>
