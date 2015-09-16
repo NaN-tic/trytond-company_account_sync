@@ -2,6 +2,14 @@
 msgid ""
 msgstr "Content-Type: text/plain; charset=utf-8\n"
 
+msgctxt "field:account.account.template,accounts:"
+msgid "Accounts"
+msgstr "Cuentas"
+
+msgctxt "field:account.account.type.template,types:"
+msgid "Types"
+msgstr "Tipos"
+
 msgctxt "field:account.chart.syncronize.start,account_template:"
 msgid "Account Template"
 msgstr "Plantilla de cuenta"
@@ -17,6 +25,22 @@ msgstr "Identificador"
 msgctxt "field:account.chart.syncronize.succeed,id:"
 msgid "ID"
 msgstr "Identificador"
+
+msgctxt "field:account.tax.code.template,tax_codes:"
+msgid "Tax Codes"
+msgstr "Códigos de impuesto"
+
+msgctxt "field:account.tax.rule.line.template,tax_rule_lines:"
+msgid "Tax Rule Lines"
+msgstr "Líneas de regla de impuesto"
+
+msgctxt "field:account.tax.rule.template,tax_rules:"
+msgid "Tax Rules"
+msgstr "Reglas de impuesto"
+
+msgctxt "field:account.tax.template,taxes:"
+msgid "Taxes"
+msgstr "Impuestos"
 
 msgctxt "model:account.chart.syncronize.start,name:"
 msgid "Syncornize Account Chart"
@@ -46,7 +70,7 @@ msgctxt "model:ir.ui.menu,name:menu_syncornize_chart"
 msgid "Syncronize Chart between companies"
 msgstr "Sincronizar plan de cuentas entre empresas"
 
-msgctxt "model:res.user,name:user_syncronize"
+msgctxt "model:res.user,name:"
 msgid "Cron Company Account Sync"
 msgstr "Planificador sincronización cuentas por empresa"
 
@@ -61,11 +85,11 @@ msgstr "Sincronizar plan de cuentas entre empresas"
 
 msgctxt "view:account.chart.syncronize.succeed:"
 msgid "Syncronize Chart of Accounts between companies"
-msgstr ""
+msgstr "Sincronizar plan de cuentas entre empresas"
 
 msgctxt "view:account.chart.syncronize.succeed:"
 msgid "The chart of accounts have been syncronized succesfully."
-msgstr ""
+msgstr "El plan de cuentas se ha sincronizado correctamente."
 
 msgctxt "wizard_button:account.chart.syncronize,start,end:"
 msgid "Cancel"
