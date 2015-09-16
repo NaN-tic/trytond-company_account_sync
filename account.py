@@ -5,8 +5,58 @@ from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 from trytond.wizard import Wizard, StateView, StateTransition, Button
 
-__all__ = ['SyncronizeChartStart', 'SyncronizeChartSucceed', 'SyncronizeChart']
+__all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate', 'TaxTemplate',
+    'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
+    'SyncronizeChartSucceed', 'SyncronizeChart']
 __metaclass__ = PoolMeta
+
+
+class CompanySyncMixin:
+    _syncronized_field = ''
+
+    def get_syncronized_company_value(self, company):
+        for value in getattr(self, self._syncronized_field):
+            if value.company == company:
+                return value
+        else:
+            return None
+
+
+class TypeTemplate(CompanySyncMixin):
+    __name__ = 'account.account.type.template'
+    _sycnronized_field = 'types'
+    types = fields.One2Many('account.account.type', 'template', 'Types')
+
+
+class AccountTemplate(CompanySyncMixin):
+    __name__ = 'account.account.template'
+    _sycnronized_field = 'accounts'
+    accounts = fields.One2Many('account.account', 'template', 'Accounts')
+
+
+class TaxCodeTemplate(CompanySyncMixin):
+    __name__ = 'account.tax.code.template'
+    _sycnronized_field = 'tax_codes'
+    tax_codes = fields.One2Many('account.tax.code', 'template', 'Tax Codes')
+
+
+class TaxTemplate(CompanySyncMixin):
+    __name__ = 'account.tax.template'
+    _sycnronized_field = 'taxes'
+    taxes = fields.One2Many('account.tax', 'template', 'Taxes')
+
+
+class TaxRuleTemplate(CompanySyncMixin):
+    __name__ = 'account.tax.rule.template'
+    _sycnronized_field = 'tax_rules'
+    tax_rules = fields.One2Many('account.tax.rule', 'template', 'Tax Rules')
+
+
+class TaxRuleLineTemplate(CompanySyncMixin):
+    __name__ = 'account.tax.rule.line.template'
+    _sycnronized_field = 'tax_rule_lines'
+    tax_rule_lines = fields.One2Many('account.tax.rule.line', 'template',
+        'Tax Rule Lines')
 
 
 class SyncronizeChartStart(ModelView):

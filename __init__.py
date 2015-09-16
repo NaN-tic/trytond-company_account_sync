@@ -6,6 +6,12 @@ from .account import *
 
 def register():
     Pool.register(
+        TypeTemplate,
+        AccountTemplate,
+        TaxCodeTemplate,
+        TaxTemplate,
+        TaxRuleTemplate,
+        TaxRuleLineTemplate,
         SyncronizeChartStart,
         SyncronizeChartSucceed,
         module='company_account_sync', type_='model')
