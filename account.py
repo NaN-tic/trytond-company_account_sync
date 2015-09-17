@@ -24,37 +24,37 @@ class CompanySyncMixin:
 
 class TypeTemplate(CompanySyncMixin):
     __name__ = 'account.account.type.template'
-    _sycnronized_field = 'types'
+    _syncronized_field = 'types'
     types = fields.One2Many('account.account.type', 'template', 'Types')
 
 
 class AccountTemplate(CompanySyncMixin):
     __name__ = 'account.account.template'
-    _sycnronized_field = 'accounts'
+    _syncronized_field = 'accounts'
     accounts = fields.One2Many('account.account', 'template', 'Accounts')
 
 
 class TaxCodeTemplate(CompanySyncMixin):
     __name__ = 'account.tax.code.template'
-    _sycnronized_field = 'tax_codes'
+    _syncronized_field = 'tax_codes'
     tax_codes = fields.One2Many('account.tax.code', 'template', 'Tax Codes')
 
 
 class TaxTemplate(CompanySyncMixin):
     __name__ = 'account.tax.template'
-    _sycnronized_field = 'taxes'
+    _syncronized_field = 'taxes'
     taxes = fields.One2Many('account.tax', 'template', 'Taxes')
 
 
 class TaxRuleTemplate(CompanySyncMixin):
     __name__ = 'account.tax.rule.template'
-    _sycnronized_field = 'tax_rules'
+    _syncronized_field = 'tax_rules'
     tax_rules = fields.One2Many('account.tax.rule', 'template', 'Tax Rules')
 
 
 class TaxRuleLineTemplate(CompanySyncMixin):
     __name__ = 'account.tax.rule.line.template'
-    _sycnronized_field = 'tax_rule_lines'
+    _syncronized_field = 'tax_rule_lines'
     tax_rule_lines = fields.One2Many('account.tax.rule.line', 'template',
         'Tax Rule Lines')
 
