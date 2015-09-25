@@ -1,9 +1,12 @@
 #The COPYRIGHT file at the top level of this repository contains the full
 #copyright notices and license terms.
+import logging
 from trytond.model import fields, ModelView
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 from trytond.wizard import Wizard, StateView, StateTransition, Button
+
+logger = logging.getLogger(__name__)
 
 __all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate', 'TaxTemplate',
     'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
@@ -118,11 +121,13 @@ class SyncronizeChart(Wizard):
             transaction = Transaction()
             with transaction.set_context(company=company.id,
                     _check_access=False):
+                logger.info('Syncronizing company %s' % company.rec_name)
                 roots = Account.search([
                         ('company', '=', company.id),
                         ('template', '=', template.id),
                         ])
                 if roots:
+                    logger.info('Updating existing chart')
                     root, = roots
                     session_id, _, _ = UpdateChart.create()
                     update = UpdateChart(session_id)
@@ -132,6 +137,7 @@ class SyncronizeChart(Wizard):
                         update.transition_update()
                     update.delete(session_id)
                 else:
+                    logger.info('Creating new chart')
                     session_id, _, _ = CreateChart.create()
                     create = CreateChart(session_id)
                     create.account.company = company
@@ -156,4 +162,6 @@ class SyncronizeChart(Wizard):
                         with transaction.set_user(0):
                             create.transition_create_properties()
                     create.delete(session_id)
+                logger.info('Finished syncronizing company %s' %
+                    company.rec_name)
         return 'succeed'
