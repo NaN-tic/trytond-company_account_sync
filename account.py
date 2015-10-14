@@ -113,11 +113,13 @@ class SyncronizeChart(Wizard):
         CreateChart = pool.get('account.create_chart', type='wizard')
         UpdateChart = pool.get('account.update_chart', type='wizard')
         template = self.start.account_template
+
         for company in self.start.companies:
             def set_defaults(form):
                 field_names = set(form.__class__._fields)
                 for key, value in form.default_get(field_names).iteritems():
                     setattr(form, key, value)
+            
             transaction = Transaction()
             with transaction.set_context(company=company.id,
                     _check_access=False):
@@ -137,31 +139,34 @@ class SyncronizeChart(Wizard):
                         update.transition_update()
                     update.delete(session_id)
                 else:
-                    logger.info('Creating new chart')
-                    session_id, _, _ = CreateChart.create()
-                    create = CreateChart(session_id)
-                    create.account.company = company
-                    create.account.account_template = template
-                    set_defaults(create.account)
-                    with transaction.set_user(0):
-                        create.transition_create_account()
-                    receivables = Account.search([
-                            ('kind', '=', 'receivable'),
-                            ('company', '=', company.id),
-                            ], limit=1)
-                    payables = Account.search([
-                            ('kind', '=', 'payable'),
-                            ('company', '=', company.id),
-                            ], limit=1)
-                    if receivables and payables:
-                        receivable, = receivables
-                        payable, = payables
-                        create.properties.company = company
-                        create.properties.account_receivable = receivable
-                        create.properties.account_payable = payable
-                        with transaction.set_user(0):
-                            create.transition_create_properties()
-                    create.delete(session_id)
+                    logger.info('No Chart created%s' % company.rec_name)
+               
+                #     logger.info('Creating new chart')
+                #     session_id, _, _ = CreateChart.create()
+                #     create = CreateChart(session_id)
+                #     create.account.company = company
+                #     create.account.account_template = template
+                #     set_defaults(create.account)
+                #     with transaction.set_user(0):
+                #         create.transition_create_account()
+                #     receivables = Account.search([
+                #             ('kind', '=', 'receivable'),
+                #             ('company', '=', company.id),
+                #             ], limit=1)
+                #     payables = Account.search([
+                #             ('kind', '=', 'payable'),
+                #             ('company', '=', company.id),
+                #             ], limit=1)
+                #     if receivables and payables:
+                #         receivable, = receivables
+                #         payable, = payables
+                #         create.properties.company = company
+                #         create.properties.account_receivable = receivable
+                #         create.properties.account_payable = payable
+                #         with transaction.set_user(0):
+                #             create.transition_create_properties()
+                #     create.delete(session_id)
                 logger.info('Finished syncronizing company %s' %
                     company.rec_name)
+
         return 'succeed'
