@@ -35,7 +35,10 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
 
     def create_chart(self, company):
         user = self.user(USER)
+        previous_company = user.company
+        previous_main_company = user.main_company
         self.user.write([user], {
+                'main_company': company.id,
                 'company': company.id,
                 })
         CONTEXT.update(self.user.get_preferences(context_only=True))
@@ -59,6 +62,12 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
         create_chart.properties.account_receivable = receivable
         create_chart.properties.account_payable = payable
         create_chart.transition_create_properties()
+        self.user.write([user], {
+                'main_company': (previous_main_company.id
+                    if previous_main_company else None),
+                'company': previous_company.id if previous_company else None,
+                })
+        CONTEXT.update(self.user.get_preferences(context_only=True))
 
     def syncronize(self):
         session_id, _, _ = self.syncronize_wizard.create()
@@ -80,6 +89,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
             main_company, = self.company.search([
                     ('rec_name', '=', 'Dunder Mifflin'),
                     ], limit=1)
+            self.create_chart(main_company)
 
             party1, = self.party.create([{
                         'name': 'Dunder Mifflin First Branch',
@@ -89,6 +99,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                         'parent': main_company.id,
                         'currency': currency1.id,
                         }])
+            self.create_chart(company1)
 
             party2, = self.party.create([{
                         'name': 'Dunder Mifflin Second Branch',
@@ -98,6 +109,7 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
                         'parent': main_company.id,
                         'currency': currency1.id,
                         }])
+            self.create_chart(company2)
 
             companies = self.company.search([])
             user = self.user(USER)
