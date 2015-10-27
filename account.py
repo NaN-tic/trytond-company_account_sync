@@ -18,7 +18,9 @@ class CompanySyncMixin:
     _syncronized_field = ''
 
     def get_syncronized_company_value(self, company):
-        for value in getattr(self, self._syncronized_field):
+        with Transaction().set_user(0):
+            instance = self.__class__(self)
+        for value in getattr(instance, instance._syncronized_field):
             if value.company == company:
                 return value
         else:
@@ -119,7 +121,7 @@ class SyncronizeChart(Wizard):
                 field_names = set(form.__class__._fields)
                 for key, value in form.default_get(field_names).iteritems():
                     setattr(form, key, value)
-            
+
             transaction = Transaction()
             with transaction.set_context(company=company.id,
                     _check_access=False):
@@ -140,7 +142,7 @@ class SyncronizeChart(Wizard):
                     update.delete(session_id)
                 else:
                     logger.info('No Chart created%s' % company.rec_name)
-               
+
                 #     logger.info('Creating new chart')
                 #     session_id, _, _ = CreateChart.create()
                 #     create = CreateChart(session_id)
