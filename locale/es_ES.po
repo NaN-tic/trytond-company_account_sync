@@ -20,11 +20,11 @@ msgstr "Empresas"
 
 msgctxt "field:account.chart.syncronize.start,id:"
 msgid "ID"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:account.chart.syncronize.succeed,id:"
 msgid "ID"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:account.tax.code.template,tax_codes:"
 msgid "Tax Codes"
