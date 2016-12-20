@@ -20,11 +20,11 @@ msgstr "Empreses"
 
 msgctxt "field:account.chart.syncronize.start,id:"
 msgid "ID"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:account.chart.syncronize.succeed,id:"
 msgid "ID"
-msgstr "Identificador"
+msgstr "ID"
 
 msgctxt "field:account.tax.code.template,tax_codes:"
 msgid "Tax Codes"
@@ -68,7 +68,7 @@ msgstr "Plantilles de compte"
 
 msgctxt "model:ir.ui.menu,name:menu_syncornize_chart"
 msgid "Syncronize Chart between companies"
-msgstr "Sincronitzar plan de comptes entre empreses"
+msgstr "Sincronitzar pla de comptes entre empreses"
 
 msgctxt "model:res.user,name:"
 msgid "Cron Company Account Sync"
@@ -80,11 +80,11 @@ msgstr "Seleccioneu les empreses i el pla de comptes que voleu sincronitzar. "
 
 msgctxt "view:account.chart.syncronize.start:"
 msgid "Syncronize Chart of Accounts between companies"
-msgstr "Sincronitzar plan de comptes entre empreses"
+msgstr "Sincronitzar pla de comptes entre empreses"
 
 msgctxt "view:account.chart.syncronize.succeed:"
 msgid "Syncronize Chart of Accounts between companies"
-msgstr "Sincronitzar plan de comptes entre empreses"
+msgstr "Sincronitzar pla de comptes entre empreses"
 
 msgctxt "view:account.chart.syncronize.succeed:"
 msgid "The chart of accounts have been syncronized succesfully."
