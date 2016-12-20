@@ -141,7 +141,7 @@ class SyncronizeChart(Wizard):
                         update.transition_update()
                     update.delete(session_id)
                 else:
-                    logger.info('No Chart created%s' % company.rec_name)
+                    logger.info('No Chart created %s' % company.rec_name)
 
                 #     logger.info('Creating new chart')
                 #     session_id, _, _ = CreateChart.create()
