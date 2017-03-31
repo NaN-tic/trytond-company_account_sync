@@ -133,15 +133,15 @@ class SyncronizeChart(Wizard):
                 root_childs(child, templates)
             return templates
 
+        codes = []
+        for tpl in root_childs(template):
+            vals = tpl._get_account_value()
+            codes.append(vals['code'])
+
         # check accounts that have same code before upgrade account chart
         for company in self.start.companies:
             with transaction.set_context(company=company.id,
                     _check_access=False):
-                codes = []
-                for tpl in root_childs(template):
-                    vals = tpl._get_account_value()
-                    codes.append(vals['code'])
-
                 accounts = Account.search([
                     ('code', 'in', codes),
                     ('template', '=', None),
