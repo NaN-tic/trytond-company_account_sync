@@ -8,8 +8,8 @@ from trytond.wizard import Wizard, StateView, StateTransition, Button
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate', 'TaxTemplate',
-    'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
+__all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate',
+    'TaxTemplate', 'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
     'SyncronizeChartSucceed', 'SyncronizeChart']
 __metaclass__ = PoolMeta
 
@@ -109,12 +109,46 @@ class SyncronizeChart(Wizard):
             Button('Ok', 'end', 'tryton-ok', default=True),
             ])
 
+    @classmethod
+    def __setup__(cls):
+        super(SyncronizeChart, cls).__setup__()
+        cls._error_messages.update({
+                'accounts_same_code': ('There are some Accounts '
+                    'with the same code that an Account template: %s.'),
+                })
+
     def transition_syncronize(self):
         pool = Pool()
         Account = pool.get('account.account')
         CreateChart = pool.get('account.create_chart', type='wizard')
         UpdateChart = pool.get('account.update_chart', type='wizard')
+
         template = self.start.account_template
+        transaction = Transaction()
+
+        def root_childs(template, templates=[]):
+            templates.append(template)
+
+            for child in template.childs:
+                root_childs(child, templates)
+            return templates
+
+        codes = []
+        for tpl in root_childs(template):
+            vals = tpl._get_account_value()
+            codes.append(vals['code'])
+
+        # check accounts that have same code before upgrade account chart
+        for company in self.start.companies:
+            with transaction.set_context(company=company.id,
+                    _check_access=False):
+                accounts = Account.search([
+                    ('code', 'in', codes),
+                    ('template', '=', None),
+                    ])
+                if accounts:
+                    codes = ','.join([a.code for a in accounts])
+                    self.raise_user_error('accounts_same_code', (codes,))
 
         for company in self.start.companies:
             def set_defaults(form):
@@ -122,7 +156,6 @@ class SyncronizeChart(Wizard):
                 for key, value in form.default_get(field_names).iteritems():
                     setattr(form, key, value)
 
-            transaction = Transaction()
             with transaction.set_context(company=company.id,
                     _check_access=False):
                 logger.info('Syncronizing company %s' % company.rec_name)
@@ -133,6 +166,7 @@ class SyncronizeChart(Wizard):
                 if roots:
                     logger.info('Updating existing chart')
                     root, = roots
+
                     session_id, _, _ = UpdateChart.create()
                     update = UpdateChart(session_id)
                     set_defaults(update.start)
