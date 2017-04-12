@@ -104,7 +104,7 @@ this repository contains the full copyright notices and license terms. -->
         <record model="ir.ui.view" id="account_type_view_tree">
             <field name="model">account.account.type</field>
             <field name="inherit" ref="account.account_type_view_tree"/>
-            <field name="name">account_type_list</field>
+            <field name="name">account_type_tree</field>
         </record>
         <record model="ir.ui.view" id="account_type_view_list">
             <field name="model">account.account.type</field>
@@ -116,11 +116,6 @@ this repository contains the full copyright notices and license terms. -->
             <field name="model">account.tax</field>
             <field name="inherit" ref="account.tax_view_form"/>
             <field name="name">tax_form</field>
-        </record>
-        <record model="ir.ui.view" id="tax_view_tree">
-            <field name="model">account.tax</field>
-            <field name="inherit" ref="account.tax_view_tree"/>
-            <field name="name">tax_tree</field>
         </record>
         <record model="ir.ui.view" id="tax_view_list">
             <field name="model">account.tax</field>

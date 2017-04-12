@@ -3,164 +3,128 @@
 # copyright notices and license terms.
 import unittest
 import trytond.tests.test_tryton
-from trytond.tests.test_tryton import test_view, test_depends
-from trytond.tests.test_tryton import POOL, DB_NAME, USER, CONTEXT
-from trytond.transaction import Transaction
+from trytond.pool import Pool
+from trytond.tests.test_tryton import ModuleTestCase, with_transaction
+
+from trytond.modules.company.tests import create_company, set_company
+from trytond.modules.account.tests import create_chart
 
 
-class CompanyAccountSyncTestCase(unittest.TestCase):
+class CompanyAccountSyncTestCase(ModuleTestCase):
     'Test company_account_sync module'
-
-    def setUp(self):
-        trytond.tests.test_tryton.install_module('company_account_sync')
-        self.account = POOL.get('account.account')
-        self.account_create_chart = POOL.get('account.create_chart',
-            type='wizard')
-        self.syncronize_wizard = POOL.get('account.chart.syncronize',
-            type='wizard')
-        self.account_template = POOL.get('account.account.template')
-        self.company = POOL.get('company.company')
-        self.config = POOL.get('account.configuration')
-        self.currency = POOL.get('currency.currency')
-        self.party = POOL.get('party.party')
-        self.user = POOL.get('res.user')
-
-    def test0005views(self):
-        'Test views'
-        test_view('company_account_sync')
-
-    def test0006depends(self):
-        'Test depends'
-        test_depends()
-
-    def create_chart(self, company):
-        user = self.user(USER)
-        previous_company = user.company
-        previous_main_company = user.main_company
-        self.user.write([user], {
-                'main_company': company.id,
-                'company': company.id,
-                })
-        CONTEXT.update(self.user.get_preferences(context_only=True))
-        account_template, = self.account_template.search([
-                ('parent', '=', None),
-                ])
-        session_id, _, _ = self.account_create_chart.create()
-        create_chart = self.account_create_chart(session_id)
-        create_chart.account.account_template = account_template
-        create_chart.account.company = company
-        create_chart.transition_create_account()
-        receivable, = self.account.search([
-                ('kind', '=', 'receivable'),
-                ('company', '=', company.id),
-                ], limit=1)
-        payable, = self.account.search([
-                ('kind', '=', 'payable'),
-                ('company', '=', company.id),
-                ], limit=1)
-        create_chart.properties.company = company
-        create_chart.properties.account_receivable = receivable
-        create_chart.properties.account_payable = payable
-        create_chart.transition_create_properties()
-        self.user.write([user], {
-                'main_company': (previous_main_company.id
-                    if previous_main_company else None),
-                'company': previous_company.id if previous_company else None,
-                })
-        CONTEXT.update(self.user.get_preferences(context_only=True))
+    module = 'company_account_sync'
 
     def syncronize(self):
-        session_id, _, _ = self.syncronize_wizard.create()
-        syncronize = self.syncronize_wizard(session_id)
-        account_template, = self.account_template.search([
-                ('parent', '=', None),
-                ])
-        syncronize.start.account_template = account_template
-        syncronize.start.companies = self.company.search([])
-        syncronize.transition_syncronize()
+        pool = Pool()
+        SyncronizeWizard = pool.get('account.chart.syncronize', type='wizard')
+        AccountTemplate = pool.get('account.account.template')
+        Company = pool.get('company.company')
+        companies = Company.search([])
+        for company in companies:
+            with set_company(company):
+                session_id, _, _ = SyncronizeWizard.create()
+                syncronize = SyncronizeWizard(session_id)
+                account_template, = AccountTemplate.search([
+                        ('parent', '=', None),
+                        ('name', '=', 'Minimal Account Chart'),
+                        ])
+                syncronize.start.account_template = account_template
+                syncronize.start.companies = [company]
+                syncronize.transition_syncronize()
 
+    @with_transaction()
     def test0010_sync(self):
         '''
         Test user company
         '''
-        with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            currency1, = self.currency.search([], limit=1)
+        pool = Pool()
+        Account = pool.get('account.account')
+        AccountTemplate = pool.get('account.account.template')
 
-            main_company, = self.company.search([
-                    ('rec_name', '=', 'Dunder Mifflin'),
-                    ], limit=1)
-            self.create_chart(main_company)
+        # Create Company
+        main_company = create_company()
+        with set_company(main_company):
+            create_chart(main_company)
 
-            party1, = self.party.create([{
-                        'name': 'Dunder Mifflin First Branch',
-                        }])
-            company1, = self.company.create([{
-                        'party': party1.id,
-                        'parent': main_company.id,
-                        'currency': currency1.id,
-                        }])
-            self.create_chart(company1)
+        account0, = Account.search([
+                ('name', '=', 'Minimal Account Chart'),
+                ('company', '=', main_company),
+                ])
 
-            party2, = self.party.create([{
-                        'name': 'Dunder Mifflin Second Branch',
-                        }])
-            company2, = self.company.create([{
-                        'party': party2.id,
-                        'parent': main_company.id,
-                        'currency': currency1.id,
-                        }])
-            self.create_chart(company2)
+        # Create Company1
+        company1 = create_company(name='Dunder Mifflin First Branch')
+        company1.parent = main_company
+        company1.save()
+        with set_company(company1):
+            create_chart(company1)
 
-            companies = self.company.search([])
-            user = self.user(USER)
-            self.user.write([user], {
-                    'main_company': main_company.id,
-                    'company': main_company.id,
-                    })
-            CONTEXT.update(self.user.get_preferences(context_only=True))
-            self.syncronize()
-            #All accounts must have the link defined.
-            accounts = self.account.search([])
-            company_accounts = {}
-            links = {}
-            for account in accounts:
-                self.assertIsNotNone(account.template)
-                if not account.company in company_accounts:
-                    company_accounts[account.company] = []
-                if not account.template in links:
-                    links[account.template] = 0
-                company_accounts[account.company].append(account)
-                links[account.template] += 1
-            for _, link_count in links.iteritems():
-                self.assertEqual(link_count, len(companies))
-            #Ensure codes are synced
-            first, second = self.account.search([
-                    ('name', '=', 'Minimal Account Chart'),
-                    ('company', 'in', [company1, company2]),
-                    ])
-            #Modify first account and test it gets modified on other company
-            template = first.template
-            template.code = '0'
-            template.save()
-            self.syncronize()
-            first = self.account(first.id)
-            second = self.account(second.id)
-            self.assertEqual(first.code, '0')
-            self.assertEqual(first.code, second.code)
+        account1, = Account.search([
+                ('name', '=', 'Minimal Account Chart'),
+                ('company', '=', company1),
+                ])
+        revenue1, = Account.search([
+                ('company', '=', company1),
+                ('kind', '=', 'revenue'),
+                ])
 
-            revenue,  = self.account.search([
-                    ('company', '=', company1.id),
-                    ('kind', '=', 'revenue'),
-                    ])
-            new_revenue, = self.account_template.copy([revenue.template], {
-                    'code': '40',
-                    'name': 'New revenue',
-                    })
-            self.syncronize()
-            for company in companies:
-                account, = self.account.search([
+        # Create Company2
+        company2 = create_company(name='Dunder Mifflin Second Branch')
+        company2.parent = main_company
+        company2.save()
+        with set_company(company2):
+            create_chart(company2)
+
+        account2, = Account.search([
+                ('name', '=', 'Minimal Account Chart'),
+                ('company', '=', company2),
+                ])
+
+        # Syncronize
+        self.syncronize()
+
+        # All accounts must have the link defined.
+        company_accounts = {}
+        links = {}
+        for account in [account0, account1, account2]:
+            self.assertIsNotNone(account.template)
+            if account.template not in links:
+                links[account.template] = 0
+            company_accounts[account.company] = account
+            links[account.template] += 1
+        for _, link_count in links.iteritems():
+            self.assertEqual(link_count, 3)
+
+        # Ensure codes are synced
+        # Modify first account and test it gets modified on other company
+        template, = AccountTemplate.search([
+                ('name', '=', 'Minimal Account Chart'),
+                ])
+        template.code = '0'
+        template.save()
+        self.syncronize()
+
+        for company in company_accounts:
+            with set_company(company):
+                company_accounts[company] = Account(company_accounts[company])
+        self.assertEqual(account1.code, '0')
+        self.assertEqual(account1.code, account2.code)
+
+        # Ensure new accounts in template are synced
+        revenue, = AccountTemplate.search([
+                ('kind', '=', 'revenue'),
+                ('parent', '=', template),
+                ])
+        new_revenue, = AccountTemplate.copy([revenue], {
+                'code': '40',
+                'name': 'New revenue',
+                })
+        self.syncronize()
+
+        for company in company_accounts:
+            with set_company(company):
+                account, = Account.search([
                         ('code', '=', '40'),
-                        ('company', '=', company.id),
+                        ('company', '=', company),
                         ])
                 self.assertEqual(new_revenue.name, account.name)
                 self.assertEqual(new_revenue.code, account.code)
@@ -169,10 +133,6 @@ class CompanyAccountSyncTestCase(unittest.TestCase):
 
 def suite():
     suite = trytond.tests.test_tryton.suite()
-    from trytond.modules.company.tests import test_company
-    for test in test_company.suite():
-        if test not in suite:
-            suite.addTest(test)
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
             CompanyAccountSyncTestCase))
     return suite
