@@ -173,6 +173,7 @@ class SyncronizeChart(Wizard):
                     update.start.account = root
                     with transaction.set_user(0):
                         update.transition_update()
+                    Account._rebuild_tree('parent', None, 0)
                     update.delete(session_id)
                 else:
                     logger.info('No Chart created %s' % company.rec_name)
