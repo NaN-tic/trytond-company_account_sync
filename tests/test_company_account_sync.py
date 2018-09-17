@@ -91,7 +91,7 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
                 links[account.template] = 0
             company_accounts[account.company] = account
             links[account.template] += 1
-        for _, link_count in links.iteritems():
+        for _, link_count in links.items():
             self.assertEqual(link_count, 3)
 
         # Ensure codes are synced
@@ -103,11 +103,11 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
         template.save()
         self.syncronize()
 
-        for company in company_accounts:
-            with set_company(company):
-                company_accounts[company] = Account(company_accounts[company])
-        self.assertEqual(account1.code, '0')
-        self.assertEqual(account1.code, account2.code)
+        with set_company(company1):
+            self.assertEqual(account1.code, '0')
+            code1 = account1.code
+        with set_company(company2):
+            self.assertEqual(code1, account2.code)
 
         # Ensure new accounts in template are synced
         revenue, = AccountTemplate.search([

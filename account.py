@@ -1,5 +1,5 @@
-#The COPYRIGHT file at the top level of this repository contains the full
-#copyright notices and license terms.
+# The COPYRIGHT file at the top level of this repository contains the full
+# copyright notices and license terms.
 import logging
 from trytond.model import fields, ModelView
 from trytond.pool import Pool, PoolMeta
@@ -14,7 +14,7 @@ __all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate',
 __metaclass__ = PoolMeta
 
 
-class CompanySyncMixin:
+class CompanySyncMixin(metaclass=PoolMeta):
     _syncronized_field = ''
 
     def get_syncronized_company_value(self, company):
@@ -153,7 +153,7 @@ class SyncronizeChart(Wizard):
         for company in self.start.companies:
             def set_defaults(form):
                 field_names = set(form.__class__._fields)
-                for key, value in form.default_get(field_names).iteritems():
+                for key, value in form.default_get(field_names).items():
                     setattr(form, key, value)
 
             with transaction.set_context(company=company.id,
