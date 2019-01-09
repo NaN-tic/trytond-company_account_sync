@@ -5,6 +5,8 @@ from trytond.model import fields, ModelView
 from trytond.pool import Pool, PoolMeta
 from trytond.transaction import Transaction
 from trytond.wizard import Wizard, StateView, StateTransition, Button
+from trytond.i18n import gettext
+from trytond.exceptions import UserError
 
 logger = logging.getLogger(__name__)
 
@@ -112,10 +114,6 @@ class SyncronizeChart(Wizard):
     @classmethod
     def __setup__(cls):
         super(SyncronizeChart, cls).__setup__()
-        cls._error_messages.update({
-                'accounts_same_code': ('There are some Accounts '
-                    'with the same code that an Account template: %s.'),
-                })
 
     def transition_syncronize(self):
         pool = Pool()
@@ -148,7 +146,10 @@ class SyncronizeChart(Wizard):
                     ])
                 if accounts:
                     codes = ','.join([a.code for a in accounts])
-                    self.raise_user_error('accounts_same_code', (codes,))
+                    raise UserError(gettext(
+                        'company_account_sync.accounts_same_code',
+                        template=codes
+                    ))
 
         for company in self.start.companies:
             def set_defaults(form):
