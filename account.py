@@ -13,8 +13,6 @@ logger = logging.getLogger(__name__)
 __all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate',
     'TaxTemplate', 'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
     'SyncronizeChartSucceed', 'SyncronizeChart']
-__metaclass__ = PoolMeta
-
 
 class CompanySyncMixin(metaclass=PoolMeta):
     _syncronized_field = ''
