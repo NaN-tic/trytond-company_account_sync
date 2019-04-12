@@ -4,7 +4,10 @@ this repository contains the full copyright notices and license terms. -->
 <tryton>
     <data group="1">
         <record model="ir.message" id="accounts_same_code">
-            <field name="text">There are some Accounts with the same code that an Account template: %(template)s.'</field>
+            <field name="text">There are some Accounts with the same code that an Account template: %(template)s.</field>
+        </record>
+        <record model="ir.message" id="missing_intercompany_user">
+            <field name="text">No company user defined form company: %(company)s.</field>
         </record>
     </data>
 </tryton>
