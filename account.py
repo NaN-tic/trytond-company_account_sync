@@ -18,12 +18,16 @@ class CompanySyncMixin(metaclass=PoolMeta):
     _syncronized_field = ''
 
     def get_syncronized_company_value(self, company):
-        with Transaction().set_user(0):
+        if not company.intercompany_user:
+            raise UserError(gettext(
+                'company_account_sync.missing_intercompany_user',
+                company=company.party.name))
+
+        with Transaction().set_user(company.intercompany_user.company.id):
             instance = self.__class__(self)
-        for value in getattr(instance, instance._syncronized_field):
-            if value.company == company:
-                return value
-        else:
+            for value in getattr(instance, instance._syncronized_field):
+                if value.company == company:
+                    return value
             return None
 
 

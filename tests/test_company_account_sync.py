@@ -64,7 +64,7 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
                 ])
         revenue1, = Account.search([
                 ('company', '=', company1),
-                ('kind', '=', 'revenue'),
+                ('type.revenue', '=', True),
                 ])
 
         # Create Company2
@@ -111,7 +111,7 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
 
         # Ensure new accounts in template are synced
         revenue, = AccountTemplate.search([
-                ('kind', '=', 'revenue'),
+                ('type.revenue', '=', True),
                 ('parent', '=', template),
                 ])
         new_revenue, = AccountTemplate.copy([revenue], {
