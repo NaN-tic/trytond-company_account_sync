@@ -14,6 +14,7 @@ __all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate',
     'TaxTemplate', 'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
     'SyncronizeChartSucceed', 'SyncronizeChart']
 
+
 class CompanySyncMixin(metaclass=PoolMeta):
     _syncronized_field = ''
 
