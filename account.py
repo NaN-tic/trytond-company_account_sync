@@ -24,12 +24,14 @@ class CompanySyncMixin(metaclass=PoolMeta):
                 'company_account_sync.missing_intercompany_user',
                 company=company.party.name))
 
-        with Transaction().set_user(company.intercompany_user.company.id):
+        with Transaction().set_user(company.intercompany_user.id), \
+                Transaction().set_context(company=company.id,
+                _check_access=False):
             instance = self.__class__(self)
             for value in getattr(instance, instance._syncronized_field):
                 if value.company == company:
                     return value
-            return None
+            return
 
 
 class TypeTemplate(CompanySyncMixin):
