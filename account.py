@@ -147,6 +147,7 @@ class SyncronizeChart(Wizard):
                     _check_access=False):
                 accounts = Account.search([
                     ('code', 'in', codes),
+                    ('company', '=', company.id),
                     ('template', '=', None),
                     ])
                 if accounts:
@@ -162,7 +163,13 @@ class SyncronizeChart(Wizard):
                 for key, value in form.default_get(field_names).items():
                     setattr(form, key, value)
 
-            with transaction.set_context(company=company.id,
+            if not company.intercompany_user:
+                raise UserError(gettext(
+                    'company_account_sync.missing_intercompany_user',
+                    company=company.party.name))
+
+            with Transaction().set_user(company.intercompany_user.id), \
+                    Transaction().set_context(company=company.id,
                     _check_access=False):
                 logger.info('Syncronizing company %s' % company.rec_name)
                 roots = Account.search([
@@ -177,8 +184,7 @@ class SyncronizeChart(Wizard):
                     update = UpdateChart(session_id)
                     set_defaults(update.start)
                     update.start.account = root
-                    with transaction.set_user(0):
-                        update.transition_update()
+                    update.transition_update()
                     Account._rebuild_tree('parent', None, 0)
                     update.delete(session_id)
                 else:
