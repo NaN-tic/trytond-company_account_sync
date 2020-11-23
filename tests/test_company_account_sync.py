@@ -116,17 +116,18 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
         # Syncronize
         self.syncronize()
 
-        # All accounts must have the link defined.
-        company_accounts = {}
-        links = {}
-        for account in [account0, account1, account2]:
-            self.assertIsNotNone(account.template)
-            if account.template not in links:
-                links[account.template] = 0
-            company_accounts[account.company] = account
-            links[account.template] += 1
-        for _, link_count in links.items():
-            self.assertEqual(link_count, 3)
+        with set_company(main_company):
+            # All accounts must have the link defined.
+            company_accounts = {}
+            links = {}
+            for account in [account0, account1, account2]:
+                self.assertIsNotNone(account.template)
+                if account.template not in links:
+                    links[account.template] = 0
+                company_accounts[account.company] = account
+                links[account.template] += 1
+            for _, link_count in links.items():
+                self.assertEqual(link_count, 3)
 
         # Ensure codes are synced
         # Modify first account and test it gets modified on other company
