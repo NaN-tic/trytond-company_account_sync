@@ -48,7 +48,7 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
         main_company_user = User()
         main_company_user.name = 'Main Company'
         main_company_user.login = 'main'
-        main_company_user.main_company = main_company
+        main_company_user.companies = [main_company]
         main_company_user.company = main_company
         main_company_user.save()
 
@@ -65,13 +65,12 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
 
         # Create Company1
         company1 = create_company(name='Dunder Mifflin First Branch')
-        company1.parent = main_company
         company1.save()
 
         company1_user = User()
         company1_user.name = 'Company 1'
         company1_user.login = 'company1'
-        company1_user.main_company = company1
+        company1_user.companies = [company1]
         company1_user.company = company1
         company1_user.save()
 
@@ -92,13 +91,12 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
 
         # Create Company2
         company2 = create_company(name='Dunder Mifflin Second Branch')
-        company2.parent = main_company
         company2.save()
 
         company2_user = User()
         company2_user.name = 'Company 2'
         company2_user.login = 'company2'
-        company2_user.main_company = company2
+        company2_user.companies = [company2]
         company2_user.company = company2
         company2_user.save()
 
