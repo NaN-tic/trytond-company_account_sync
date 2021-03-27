@@ -10,10 +10,6 @@ from trytond.exceptions import UserError
 
 logger = logging.getLogger(__name__)
 
-__all__ = ['TypeTemplate', 'AccountTemplate', 'TaxCodeTemplate',
-    'TaxTemplate', 'TaxRuleTemplate', 'TaxRuleLineTemplate', 'SyncronizeChartStart',
-    'SyncronizeChartSucceed', 'SyncronizeChart']
-
 
 class CompanySyncMixin(metaclass=PoolMeta):
     _syncronized_field = ''
@@ -123,7 +119,6 @@ class SyncronizeChart(Wizard):
     def transition_syncronize(self):
         pool = Pool()
         Account = pool.get('account.account')
-        CreateChart = pool.get('account.create_chart', type='wizard')
         UpdateChart = pool.get('account.update_chart', type='wizard')
 
         template = self.start.account_template
