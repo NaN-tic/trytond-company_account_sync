@@ -78,10 +78,6 @@ msgctxt "model:ir.ui.menu,name:menu_syncornize_chart"
 msgid "Syncronize Chart between companies"
 msgstr "Sincronizar plan de cuentas entre empresas"
 
-msgctxt "model:res.user,name:"
-msgid "Cron Company Account Sync"
-msgstr "Planificador sincronización cuentas por empresa"
-
 msgctxt "view:account.chart.syncronize.start:"
 msgid "Select the companies and the chart you want to sincronize"
 msgstr ""
