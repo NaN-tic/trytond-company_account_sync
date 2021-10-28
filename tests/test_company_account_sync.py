@@ -137,10 +137,13 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
         self.syncronize()
 
         with set_company(company1):
-            self.assertEqual(account1.code, '0')
+            account1 = Account(account1)
             code1 = account1.code
+            self.assertEqual(code1, '0')
         with set_company(company2):
-            self.assertEqual(code1, account2.code)
+            account2 = Account(account2)
+            code2 = account2.code
+            self.assertEqual(code2, code1)
 
         # Ensure new accounts in template are synced
         revenue, = AccountTemplate.search([
