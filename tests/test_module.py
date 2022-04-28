@@ -1,17 +1,16 @@
-#!/usr/bin/env python
-# The COPYRIGHT file at the top level of this repository contains the full
-# copyright notices and license terms.
-import unittest
-import trytond.tests.test_tryton
+
+# This file is part of Tryton.  The COPYRIGHT file at the top level of
+# this repository contains the full copyright notices and license terms.
+
 from trytond.pool import Pool
 from trytond.tests.test_tryton import ModuleTestCase, with_transaction
 
-from trytond.modules.company.tests import create_company, set_company
+from trytond.modules.company.tests import create_company, set_company, CompanyTestMixin
 from trytond.modules.account.tests import create_chart
 
 
-class CompanyAccountSyncTestCase(ModuleTestCase):
-    'Test company_account_sync module'
+class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
+    'Test CompanyAccountSync module'
     module = 'company_account_sync'
 
     def syncronize(self):
@@ -167,8 +166,4 @@ class CompanyAccountSyncTestCase(ModuleTestCase):
                 self.assertEqual(account.template.id, new_revenue.id)
 
 
-def suite():
-    suite = trytond.tests.test_tryton.suite()
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-            CompanyAccountSyncTestCase))
-    return suite
+del ModuleTestCase
