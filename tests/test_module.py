@@ -25,7 +25,7 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
                 syncronize = SyncronizeWizard(session_id)
                 account_template, = AccountTemplate.search([
                         ('parent', '=', None),
-                        ('name', '=', 'Minimal Account Chart'),
+                        ('name', '=', 'Universal Chart of Accounts'),
                         ])
                 syncronize.start.account_template = account_template
                 syncronize.start.companies = [company]
@@ -58,7 +58,7 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
             create_chart(main_company)
 
         account0, = Account.search([
-                ('name', '=', 'Minimal Account Chart'),
+                ('parent', '=', None), # Universal Chart of Accounts
                 ('company', '=', main_company),
                 ])
 
@@ -80,13 +80,14 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
             create_chart(company1)
 
         account1, = Account.search([
-                ('name', '=', 'Minimal Account Chart'),
+                ('parent', '=', None), # Universal Chart of Accounts
                 ('company', '=', company1),
                 ])
         revenue1, = Account.search([
                 ('company', '=', company1),
                 ('type.revenue', '=', True),
-                ])
+                ('closed', '=', False),
+                ], limit=1)
 
         # Create Company2
         company2 = create_company(name='Dunder Mifflin Second Branch')
@@ -106,7 +107,7 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
             create_chart(company2)
 
         account2, = Account.search([
-                ('name', '=', 'Minimal Account Chart'),
+                ('parent', '=', None), # Universal Chart of Accounts
                 ('company', '=', company2),
                 ])
 
@@ -129,7 +130,7 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
         # Ensure codes are synced
         # Modify first account and test it gets modified on other company
         template, = AccountTemplate.search([
-                ('name', '=', 'Minimal Account Chart'),
+                ('name', '=', 'Universal Chart of Accounts'),
                 ])
         template.code = '0'
         template.save()
@@ -147,8 +148,8 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
         # Ensure new accounts in template are synced
         revenue, = AccountTemplate.search([
                 ('type.revenue', '=', True),
-                ('parent', '=', template),
-                ])
+                ('closed', '=', False),
+                ], limit=1)
         new_revenue, = AccountTemplate.copy([revenue], {
                 'code': '40',
                 'name': 'New revenue',
