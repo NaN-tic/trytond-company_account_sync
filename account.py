@@ -180,7 +180,13 @@ class SyncronizeChart(Wizard):
                     set_defaults(update.start)
                     update.start.account = root
                     update.transition_update()
-                    Account._rebuild_tree('parent', None, 0)
+                    if (Account.parent.left is not None
+                            and Account.parent.right is not None):
+                        Account._rebuild_tree('parent', None, 0)
+                    else:
+                        logger.warning(
+                            'Skip rebuild tree for account.account: '
+                            'tree fields disabled')
                     update.delete(session_id)
                 else:
                     logger.info('No Chart created %s' % company.rec_name)
