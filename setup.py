@@ -10,7 +10,6 @@ from configparser import ConfigParser
 MODULE = 'company_account_sync'
 PREFIX = 'nantic'
 MODULE2PREFIX = {
-    'company_user': 'nantic',
 }
 
 

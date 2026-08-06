@@ -51,8 +51,6 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
         main_company_user.company = main_company
         main_company_user.save()
 
-        main_company.intercompany_user = main_company_user
-        main_company.save()
 
         with set_company(main_company):
             create_chart(main_company)
@@ -73,8 +71,6 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
         company1_user.company = company1
         company1_user.save()
 
-        company1.intercompany_user = company1_user
-        company1.save()
 
         with set_company(company1):
             create_chart(company1)
@@ -100,8 +96,6 @@ class CompanyAccountSyncTestCase(CompanyTestMixin, ModuleTestCase):
         company2_user.company = company2
         company2_user.save()
 
-        company2.intercompany_user = company2_user
-        company2.save()
 
         with set_company(company2):
             create_chart(company2)
