@@ -177,4 +177,10 @@ this repository contains the full copyright notices and license terms. -->
             action="wizard_syncronize" id="menu_syncornize_chart"/>
 
     </data>
+    <data>
+        <record model="ir.action-res.group" id="syncronize_group_account_admin">
+            <field name="action" ref="wizard_syncronize"/>
+            <field name="group" ref="account.group_account_admin"/>
+        </record>
+    </data>
 </tryton>
